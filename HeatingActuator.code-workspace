@@ -26,6 +26,9 @@
 		},
 		{
 			"path": "../OGM-SensorDevices"
+		},
+		{
+			"path": "../OFM-ShutterControllerModule"
 		}
 	],
 	"settings": {
