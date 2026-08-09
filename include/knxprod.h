@@ -11,19 +11,21 @@
 #define ETS_ModuleId_NONE 0
 #define ETS_ModuleId_BASE 1
 #define ETS_ModuleId_UCT 2
-#define ETS_ModuleId_HTA 3
-#define ETS_ModuleId_WIRE 4
-#define ETS_ModuleId_LOG 5
+#define ETS_ModuleId_CLI 3
+#define ETS_ModuleId_HTA 4
+#define ETS_ModuleId_WIRE 5
+#define ETS_ModuleId_LOG 6
 #define MAIN_FirmwareName "Heizungsaktor (dev)"
 #define MAIN_OpenKnxId 0xAF
 #define MAIN_ApplicationNumber 6
-#define MAIN_ApplicationVersion 12
+#define MAIN_ApplicationVersion 21
 #define MAIN_ApplicationEncoding iso-8859-15
-#define MAIN_ParameterSize 5095
-#define MAIN_MaxKoNumber 775
+#define MAIN_ParameterSize 6010
+#define MAIN_MaxKoNumber 1315
 #define MAIN_OrderNumber "OpenKnxHeatingActuator"
 #define BASE_ModuleVersion 24
 #define UCT_ModuleVersion 5
+#define CLI_ModuleVersion 1
 #define HTA_ModuleVersion 1
 #define WIRE_ModuleVersion 34
 #define LOG_ModuleVersion 67
@@ -93,15 +95,18 @@
 #define BASE_ModuleEnabled_UCT                   110      // 1 Bit, Bit 6
 #define     BASE_ModuleEnabled_UCTMask 0x40
 #define     BASE_ModuleEnabled_UCTShift 6
-#define BASE_ModuleEnabled_HTA                   110      // 1 Bit, Bit 5
-#define     BASE_ModuleEnabled_HTAMask 0x20
-#define     BASE_ModuleEnabled_HTAShift 5
-#define BASE_ModuleEnabled_WIRE                  110      // 1 Bit, Bit 4
-#define     BASE_ModuleEnabled_WIREMask 0x10
-#define     BASE_ModuleEnabled_WIREShift 4
-#define BASE_ModuleEnabled_LOG                   110      // 1 Bit, Bit 3
-#define     BASE_ModuleEnabled_LOGMask 0x08
-#define     BASE_ModuleEnabled_LOGShift 3
+#define BASE_ModuleEnabled_CLI                   110      // 1 Bit, Bit 5
+#define     BASE_ModuleEnabled_CLIMask 0x20
+#define     BASE_ModuleEnabled_CLIShift 5
+#define BASE_ModuleEnabled_HTA                   110      // 1 Bit, Bit 4
+#define     BASE_ModuleEnabled_HTAMask 0x10
+#define     BASE_ModuleEnabled_HTAShift 4
+#define BASE_ModuleEnabled_WIRE                  110      // 1 Bit, Bit 3
+#define     BASE_ModuleEnabled_WIREMask 0x08
+#define     BASE_ModuleEnabled_WIREShift 3
+#define BASE_ModuleEnabled_LOG                   110      // 1 Bit, Bit 2
+#define     BASE_ModuleEnabled_LOGMask 0x04
+#define     BASE_ModuleEnabled_LOGShift 2
 
 // Zeitbasis
 #define ParamBASE_StartupDelayBase                    ((knx.paramByte(BASE_StartupDelayBase) & BASE_StartupDelayBaseMask) >> BASE_StartupDelayBaseShift)
@@ -160,6 +165,8 @@
 #define ParamBASE_Dummy                               (knx.paramByte(BASE_Dummy))
 // UCT
 #define ParamBASE_ModuleEnabled_UCT                   ((bool)(knx.paramByte(BASE_ModuleEnabled_UCT) & BASE_ModuleEnabled_UCTMask))
+// CLI
+#define ParamBASE_ModuleEnabled_CLI                   ((bool)(knx.paramByte(BASE_ModuleEnabled_CLI) & BASE_ModuleEnabled_CLIMask))
 // HTA
 #define ParamBASE_ModuleEnabled_HTA                   ((bool)(knx.paramByte(BASE_ModuleEnabled_HTA) & BASE_ModuleEnabled_HTAMask))
 // WIRE
@@ -192,56 +199,684 @@
 
 
 
-#define HTA_VisibleChannels                     114      // uint8_t
-#define HTA_OperationMode                       115      // 2 Bits, Bit 7-6
+#define CLI_VisibleChannels                     114      // uint8_t
+#define CLI_SummerWinterKo                      115      // 1 Bit, Bit 7
+#define     CLI_SummerWinterKoMask 0x80
+#define     CLI_SummerWinterKoShift 7
+#define CLI_SummerWinterDate                    115      // 1 Bit, Bit 6
+#define     CLI_SummerWinterDateMask 0x40
+#define     CLI_SummerWinterDateShift 6
+#define CLI_SummerWinterDayTemp                 115      // 1 Bit, Bit 5
+#define     CLI_SummerWinterDayTempMask 0x20
+#define     CLI_SummerWinterDayTempShift 5
+#define CLI_AverageTempCalc                     116      // 4 Bits, Bit 7-4
+#define     CLI_AverageTempCalcMask 0xF0
+#define     CLI_AverageTempCalcShift 4
+#define CLI_SendReadRequest                     116      // 1 Bit, Bit 3
+#define     CLI_SendReadRequestMask 0x08
+#define     CLI_SendReadRequestShift 3
+#define CLI_AverageTempSummer                   117      // uint8_t
+#define CLI_AverageDaysSummer                   118      // 4 Bits, Bit 7-4
+#define     CLI_AverageDaysSummerMask 0xF0
+#define     CLI_AverageDaysSummerShift 4
+#define CLI_AverageTempWinter                   119      // uint8_t
+#define CLI_AverageDaysWinter                   120      // 4 Bits, Bit 7-4
+#define     CLI_AverageDaysWinterMask 0xF0
+#define     CLI_AverageDaysWinterShift 4
+#define CLI_SummerTimeStartDay                  121      // 24 Bits, Bit 31-8
+#define     CLI_SummerTimeStartDayMask 0xFFFFFF00
+#define     CLI_SummerTimeStartDayShift 8
+#define CLI_WinterTimeStartDay                  124      // 24 Bits, Bit 31-8
+#define     CLI_WinterTimeStartDayMask 0xFFFFFF00
+#define     CLI_WinterTimeStartDayShift 8
+#define CLI_SummerModeChange                    127      // 8 Bits, Bit 7-0
+#define CLI_WinterModeChange                    128      // 8 Bits, Bit 7-0
+
+// Anzahl der Räume
+#define ParamCLI_VisibleChannels                     (knx.paramByte(CLI_VisibleChannels))
+// Objekt
+#define ParamCLI_SummerWinterKo                      ((bool)(knx.paramByte(CLI_SummerWinterKo) & CLI_SummerWinterKoMask))
+// Datum
+#define ParamCLI_SummerWinterDate                    ((bool)(knx.paramByte(CLI_SummerWinterDate) & CLI_SummerWinterDateMask))
+// 24h Temperaturdurchschnitt
+#define ParamCLI_SummerWinterDayTemp                 ((bool)(knx.paramByte(CLI_SummerWinterDayTemp) & CLI_SummerWinterDayTempMask))
+// Berechnung
+#define ParamCLI_AverageTempCalc                     (PT_CLIAverageTemperatureCalculation)((knx.paramByte(CLI_AverageTempCalc) & CLI_AverageTempCalcMask) >> CLI_AverageTempCalcShift)
+// Leseanfrage zum Berechnungszeitpunkt senden
+#define ParamCLI_SendReadRequest                     ((bool)(knx.paramByte(CLI_SendReadRequest) & CLI_SendReadRequestMask))
+// Sommer bei ≥
+#define ParamCLI_AverageTempSummer                   (knx.paramByte(CLI_AverageTempSummer))
+// für
+#define ParamCLI_AverageDaysSummer                   ((knx.paramByte(CLI_AverageDaysSummer) & CLI_AverageDaysSummerMask) >> CLI_AverageDaysSummerShift)
+// Winter bei ≤
+#define ParamCLI_AverageTempWinter                   (knx.paramByte(CLI_AverageTempWinter))
+// für
+#define ParamCLI_AverageDaysWinter                   ((knx.paramByte(CLI_AverageDaysWinter) & CLI_AverageDaysWinterMask) >> CLI_AverageDaysWinterShift)
+// Sommerbetrieb ab
+#define ParamCLI_SummerTimeStartDay                  ((knx.paramInt(CLI_SummerTimeStartDay) & CLI_SummerTimeStartDayMask) >> CLI_SummerTimeStartDayShift)
+// Winterbetrieb ab
+#define ParamCLI_WinterTimeStartDay                  ((knx.paramInt(CLI_WinterTimeStartDay) & CLI_WinterTimeStartDayMask) >> CLI_WinterTimeStartDayShift)
+// Bei Sommerbetriebsstart Wechsel auf
+#define ParamCLI_SummerModeChange                    (PT_CLIModeChange)(knx.paramByte(CLI_SummerModeChange))
+// Bei Winterbetriebsstart Wechsel auf
+#define ParamCLI_WinterModeChange                    (PT_CLIModeChange)(knx.paramByte(CLI_WinterModeChange))
+
+#define CLI_KoWinter 790
+#define CLI_KoWinterStatus 791
+#define CLI_KoOutsideTemp 792
+#define CLI_KoDayAverage 793
+
+// Sommer- / Winterbetrieb
+#define KoCLI_Winter                              (knx.getGroupObject(CLI_KoWinter))
+// Sommer- / Winterbetrieb Status
+#define KoCLI_WinterStatus                        (knx.getGroupObject(CLI_KoWinterStatus))
+// Außentemperatur
+#define KoCLI_OutsideTemp                         (knx.getGroupObject(CLI_KoOutsideTemp))
+// 
+#define KoCLI_DayAverage                          (knx.getGroupObject(CLI_KoDayAverage))
+
+#define CLI_ChannelCount 12
+
+// Parameter per channel
+#define CLI_ParamBlockOffset 129
+#define CLI_ParamBlockSize 75
+#define CLI_ParamCalcIndex(index) (index + CLI_ParamBlockOffset + _channelIndex * CLI_ParamBlockSize)
+
+#define CLI_CHChannelDisabled                    0      // 1 Bit, Bit 7
+#define     CLI_CHChannelDisabledMask 0x80
+#define     CLI_CHChannelDisabledShift 7
+#define CLI_CHKOForRelativTempChange             0      // 1 Bit, Bit 6
+#define     CLI_CHKOForRelativTempChangeMask 0x40
+#define     CLI_CHKOForRelativTempChangeShift 6
+#define CLI_CHModeSelectionTurnOn                0      // 1 Bit, Bit 5
+#define     CLI_CHModeSelectionTurnOnMask 0x20
+#define     CLI_CHModeSelectionTurnOnShift 5
+#define CLI_CHTargetLimitHandling                0      // 1 Bit, Bit 4
+#define     CLI_CHTargetLimitHandlingMask 0x10
+#define     CLI_CHTargetLimitHandlingShift 4
+#define CLI_CHModeFeedbackReturnOff              0      // 1 Bit, Bit 3
+#define     CLI_CHModeFeedbackReturnOffMask 0x08
+#define     CLI_CHModeFeedbackReturnOffShift 3
+#define CLI_CHRelativTempChangeHeating           1      // 8 Bits, Bit 7-0
+#define CLI_CHTargetMinHeating                   2      // float (2 Byte)
+#define CLI_CHTargetMaxHeating                   4      // float (2 Byte)
+#define CLI_CHTargetDefaultHeating               6      // float (2 Byte)
+#define CLI_CHTargetMinCooling                   8      // float (2 Byte)
+#define CLI_CHTargetMaxCooling                  10      // float (2 Byte)
+#define CLI_CHTargetDefaultCooling              12      // float (2 Byte)
+#define CLI_CHInitTemp                          14      // 4 Bits, Bit 7-4
+#define     CLI_CHInitTempMask 0xF0
+#define     CLI_CHInitTempShift 4
+#define CLI_CHDefaultMode                       15      // 8 Bits, Bit 7-0
+#define CLI_CHInitMode                          16      // 4 Bits, Bit 7-4
+#define     CLI_CHInitModeMask 0xF0
+#define     CLI_CHInitModeShift 4
+#define CLI_CHInitPower                         17      // 4 Bits, Bit 7-4
+#define     CLI_CHInitPowerMask 0xF0
+#define     CLI_CHInitPowerShift 4
+#define CLI_CHDefaultPower                      17      // 1 Bit, Bit 3
+#define     CLI_CHDefaultPowerMask 0x08
+#define     CLI_CHDefaultPowerShift 3
+#define CLI_CH2TargetTemp                       17      // 1 Bit, Bit 2
+#define     CLI_CH2TargetTempMask 0x04
+#define     CLI_CH2TargetTempShift 2
+#define CLI_CHRelativTempChangeCooling          18      // 8 Bits, Bit 7-0
+#define CLI_CHControlMode1                      20      // 4 Bits, Bit 7-4
+#define     CLI_CHControlMode1Mask 0xF0
+#define     CLI_CHControlMode1Shift 4
+#define CLI_CHControlTemperature1               20      // 4 Bits, Bit 3-0
+#define     CLI_CHControlTemperature1Mask 0x0F
+#define     CLI_CHControlTemperature1Shift 0
+#define CLI_CHFullPowerOff1                     21      // 1 Bit, Bit 7
+#define     CLI_CHFullPowerOff1Mask 0x80
+#define     CLI_CHFullPowerOff1Shift 7
+#define CLI_CHWaitTimeAfterPowerUp1             21      // 7 Bits, Bit 6-0
+#define     CLI_CHWaitTimeAfterPowerUp1Mask 0x7F
+#define     CLI_CHWaitTimeAfterPowerUp1Shift 0
+#define CLI_CHPIPreset1                         22      // 4 Bits, Bit 7-4
+#define     CLI_CHPIPreset1Mask 0xF0
+#define     CLI_CHPIPreset1Shift 4
+#define CLI_CHPII1                              23      // uint8_t
+#define CLI_CHPID1                              24      // uint8_t
+#define CLI_CHTargetTempRounding1               25      // 4 Bits, Bit 7-4
+#define     CLI_CHTargetTempRounding1Mask 0xF0
+#define     CLI_CHTargetTempRounding1Shift 4
+#define CLI_CHIsActive1                         25      // 2 Bits, Bit 3-2
+#define     CLI_CHIsActive1Mask 0x0C
+#define     CLI_CHIsActive1Shift 2
+#define CLI_CHPWM1                              26      // uint16_t
+#define CLI_CHControlMode2                      28      // 4 Bits, Bit 7-4
+#define     CLI_CHControlMode2Mask 0xF0
+#define     CLI_CHControlMode2Shift 4
+#define CLI_CHControlTemperature2               28      // 4 Bits, Bit 3-0
+#define     CLI_CHControlTemperature2Mask 0x0F
+#define     CLI_CHControlTemperature2Shift 0
+#define CLI_CHFullPowerOff2                     29      // 1 Bit, Bit 7
+#define     CLI_CHFullPowerOff2Mask 0x80
+#define     CLI_CHFullPowerOff2Shift 7
+#define CLI_CHWaitTimeAfterPowerUp2             29      // 7 Bits, Bit 6-0
+#define     CLI_CHWaitTimeAfterPowerUp2Mask 0x7F
+#define     CLI_CHWaitTimeAfterPowerUp2Shift 0
+#define CLI_CHPIPreset2                         30      // 4 Bits, Bit 7-4
+#define     CLI_CHPIPreset2Mask 0xF0
+#define     CLI_CHPIPreset2Shift 4
+#define CLI_CHPII2                              31      // uint8_t
+#define CLI_CHPID2                              32      // uint8_t
+#define CLI_CHTargetTempRounding2               33      // 4 Bits, Bit 7-4
+#define     CLI_CHTargetTempRounding2Mask 0xF0
+#define     CLI_CHTargetTempRounding2Shift 4
+#define CLI_CHIsActive2                         33      // 2 Bits, Bit 3-2
+#define     CLI_CHIsActive2Mask 0x0C
+#define     CLI_CHIsActive2Shift 2
+#define CLI_CHPWM2                              34      // uint16_t
+#define CLI_CHCoolDeviceSelection               36      // 4 Bits, Bit 7-4
+#define     CLI_CHCoolDeviceSelectionMask 0xF0
+#define     CLI_CHCoolDeviceSelectionShift 4
+#define CLI_CHCoolDeactiveInWinter              37      // 1 Bit, Bit 7
+#define     CLI_CHCoolDeactiveInWinterMask 0x80
+#define     CLI_CHCoolDeactiveInWinterShift 7
+#define CLI_CHHeatDeviceSelection               38      // 4 Bits, Bit 7-4
+#define     CLI_CHHeatDeviceSelectionMask 0xF0
+#define     CLI_CHHeatDeviceSelectionShift 4
+#define CLI_CHHeatDeactiveInSummer              39      // 1 Bit, Bit 7
+#define     CLI_CHHeatDeactiveInSummerMask 0x80
+#define     CLI_CHHeatDeactiveInSummerShift 7
+#define CLI_CHDehumDeviceSelection              40      // 4 Bits, Bit 7-4
+#define     CLI_CHDehumDeviceSelectionMask 0xF0
+#define     CLI_CHDehumDeviceSelectionShift 4
+#define CLI_CHFanDeviceSelection                42      // 4 Bits, Bit 7-4
+#define     CLI_CHFanDeviceSelectionMask 0xF0
+#define     CLI_CHFanDeviceSelectionShift 4
+#define CLI_CHAutoDeviceSelection               44      // 4 Bits, Bit 7-4
+#define     CLI_CHAutoDeviceSelectionMask 0xF0
+#define     CLI_CHAutoDeviceSelectionShift 4
+#define CLI_CHAutoCoolDeviceSelection           45      // 4 Bits, Bit 7-4
+#define     CLI_CHAutoCoolDeviceSelectionMask 0xF0
+#define     CLI_CHAutoCoolDeviceSelectionShift 4
+#define CLI_CHAutoHeatDeviceSelection           45      // 4 Bits, Bit 3-0
+#define     CLI_CHAutoHeatDeviceSelectionMask 0x0F
+#define     CLI_CHAutoHeatDeviceSelectionShift 0
+#define CLI_CHAutoDehumDeviceSelection          46      // 4 Bits, Bit 7-4
+#define     CLI_CHAutoDehumDeviceSelectionMask 0xF0
+#define     CLI_CHAutoDehumDeviceSelectionShift 4
+#define CLI_CHAutoFanDeviceSelection            46      // 4 Bits, Bit 3-0
+#define     CLI_CHAutoFanDeviceSelectionMask 0x0F
+#define     CLI_CHAutoFanDeviceSelectionShift 0
+#define CLI_CHBehaviorOnDeviceChange            47      // 4 Bits, Bit 7-4
+#define     CLI_CHBehaviorOnDeviceChangeMask 0xF0
+#define     CLI_CHBehaviorOnDeviceChangeShift 4
+#define CLI_CHCoolingWinterAllowed              47      // 1 Bit, Bit 3
+#define     CLI_CHCoolingWinterAllowedMask 0x08
+#define     CLI_CHCoolingWinterAllowedShift 3
+#define CLI_CHHeatingSummerAllowed              47      // 1 Bit, Bit 2
+#define     CLI_CHHeatingSummerAllowedMask 0x04
+#define     CLI_CHHeatingSummerAllowedShift 2
+#define CLI_CHFallbackAutoWaitTimeDelayBase     48      // 2 Bits, Bit 7-6
+#define     CLI_CHFallbackAutoWaitTimeDelayBaseMask 0xC0
+#define     CLI_CHFallbackAutoWaitTimeDelayBaseShift 6
+#define CLI_CHFallbackAutoWaitTimeDelayTime     48      // 14 Bits, Bit 13-0
+#define     CLI_CHFallbackAutoWaitTimeDelayTimeMask 0x3FFF
+#define     CLI_CHFallbackAutoWaitTimeDelayTimeShift 0
+#define CLI_CHHysteresisCooling                 50      // 4 Bits, Bit 7-4
+#define     CLI_CHHysteresisCoolingMask 0xF0
+#define     CLI_CHHysteresisCoolingShift 4
+#define CLI_CHHysteresisHeating                 50      // 4 Bits, Bit 3-0
+#define     CLI_CHHysteresisHeatingMask 0x0F
+#define     CLI_CHHysteresisHeatingShift 0
+#define CLI_CHWindowOpenEnabled                 51      // 1 Bit, Bit 7
+#define     CLI_CHWindowOpenEnabledMask 0x80
+#define     CLI_CHWindowOpenEnabledShift 7
+#define CLI_CHWindowOpenCondition1              52      // 4 Bits, Bit 7-4
+#define     CLI_CHWindowOpenCondition1Mask 0xF0
+#define     CLI_CHWindowOpenCondition1Shift 4
+#define CLI_CHWindowOpenAction1                 52      // 4 Bits, Bit 3-0
+#define     CLI_CHWindowOpenAction1Mask 0x0F
+#define     CLI_CHWindowOpenAction1Shift 0
+#define CLI_CHWindowOpenDelayBase1              53      // 2 Bits, Bit 7-6
+#define     CLI_CHWindowOpenDelayBase1Mask 0xC0
+#define     CLI_CHWindowOpenDelayBase1Shift 6
+#define CLI_CHWindowOpenDelayTime1              53      // 14 Bits, Bit 13-0
+#define     CLI_CHWindowOpenDelayTime1Mask 0x3FFF
+#define     CLI_CHWindowOpenDelayTime1Shift 0
+#define CLI_CHWindowOpenTempCorrection1         55      // 8 Bits, Bit 7-0
+#define CLI_CHWindowOpenCondition2              56      // 4 Bits, Bit 7-4
+#define     CLI_CHWindowOpenCondition2Mask 0xF0
+#define     CLI_CHWindowOpenCondition2Shift 4
+#define CLI_CHWindowOpenAction2                 56      // 4 Bits, Bit 3-0
+#define     CLI_CHWindowOpenAction2Mask 0x0F
+#define     CLI_CHWindowOpenAction2Shift 0
+#define CLI_CHWindowOpenDelayBase2              57      // 2 Bits, Bit 7-6
+#define     CLI_CHWindowOpenDelayBase2Mask 0xC0
+#define     CLI_CHWindowOpenDelayBase2Shift 6
+#define CLI_CHWindowOpenDelayTime2              57      // 14 Bits, Bit 13-0
+#define     CLI_CHWindowOpenDelayTime2Mask 0x3FFF
+#define     CLI_CHWindowOpenDelayTime2Shift 0
+#define CLI_CHWindowOpenTempCorrection2         59      // 8 Bits, Bit 7-0
+#define CLI_CHWindowOpenCondition3              60      // 4 Bits, Bit 7-4
+#define     CLI_CHWindowOpenCondition3Mask 0xF0
+#define     CLI_CHWindowOpenCondition3Shift 4
+#define CLI_CHWindowOpenAction3                 60      // 4 Bits, Bit 3-0
+#define     CLI_CHWindowOpenAction3Mask 0x0F
+#define     CLI_CHWindowOpenAction3Shift 0
+#define CLI_CHWindowOpenDelayBase3              61      // 2 Bits, Bit 7-6
+#define     CLI_CHWindowOpenDelayBase3Mask 0xC0
+#define     CLI_CHWindowOpenDelayBase3Shift 6
+#define CLI_CHWindowOpenDelayTime3              61      // 14 Bits, Bit 13-0
+#define     CLI_CHWindowOpenDelayTime3Mask 0x3FFF
+#define     CLI_CHWindowOpenDelayTime3Shift 0
+#define CLI_CHWindowOpenTempCorrection3         63      // 8 Bits, Bit 7-0
+#define CLI_CHWindowOpenCondition4              64      // 4 Bits, Bit 7-4
+#define     CLI_CHWindowOpenCondition4Mask 0xF0
+#define     CLI_CHWindowOpenCondition4Shift 4
+#define CLI_CHWindowOpenAction4                 64      // 4 Bits, Bit 3-0
+#define     CLI_CHWindowOpenAction4Mask 0x0F
+#define     CLI_CHWindowOpenAction4Shift 0
+#define CLI_CHWindowOpenDelayBase4              65      // 2 Bits, Bit 7-6
+#define     CLI_CHWindowOpenDelayBase4Mask 0xC0
+#define     CLI_CHWindowOpenDelayBase4Shift 6
+#define CLI_CHWindowOpenDelayTime4              65      // 14 Bits, Bit 13-0
+#define     CLI_CHWindowOpenDelayTime4Mask 0x3FFF
+#define     CLI_CHWindowOpenDelayTime4Shift 0
+#define CLI_CHWindowOpenTempCorrection4         67      // 8 Bits, Bit 7-0
+#define CLI_CHWindowOpenCondition5              68      // 4 Bits, Bit 7-4
+#define     CLI_CHWindowOpenCondition5Mask 0xF0
+#define     CLI_CHWindowOpenCondition5Shift 4
+#define CLI_CHWindowOpenAction5                 68      // 4 Bits, Bit 3-0
+#define     CLI_CHWindowOpenAction5Mask 0x0F
+#define     CLI_CHWindowOpenAction5Shift 0
+#define CLI_CHWindowOpenDelayBase5              69      // 2 Bits, Bit 7-6
+#define     CLI_CHWindowOpenDelayBase5Mask 0xC0
+#define     CLI_CHWindowOpenDelayBase5Shift 6
+#define CLI_CHWindowOpenDelayTime5              69      // 14 Bits, Bit 13-0
+#define     CLI_CHWindowOpenDelayTime5Mask 0x3FFF
+#define     CLI_CHWindowOpenDelayTime5Shift 0
+#define CLI_CHWindowOpenTempCorrection5         71      // 8 Bits, Bit 7-0
+#define CLI_CHWindowClose                       72      // 1 Bit, Bit 7
+#define     CLI_CHWindowCloseMask 0x80
+#define     CLI_CHWindowCloseShift 7
+#define CLI_CHWindowCloseWaitTimeDelayBase      73      // 2 Bits, Bit 7-6
+#define     CLI_CHWindowCloseWaitTimeDelayBaseMask 0xC0
+#define     CLI_CHWindowCloseWaitTimeDelayBaseShift 6
+#define CLI_CHWindowCloseWaitTimeDelayTime      73      // 14 Bits, Bit 13-0
+#define     CLI_CHWindowCloseWaitTimeDelayTimeMask 0x3FFF
+#define     CLI_CHWindowCloseWaitTimeDelayTimeShift 0
+
+// Kanal deaktivieren (zu Testzwecken)
+#define ParamCLI_CHChannelDisabled                   ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHChannelDisabled)) & CLI_CHChannelDisabledMask))
+// Objekt für relative Solltemperaturänderung
+#define ParamCLI_CHKOForRelativTempChange            ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHKOForRelativTempChange)) & CLI_CHKOForRelativTempChangeMask))
+// Modus Auswahl schaltet EIN
+#define ParamCLI_CHModeSelectionTurnOn               ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHModeSelectionTurnOn)) & CLI_CHModeSelectionTurnOnMask))
+// Bei ungültiger Solltemperaturvorgabe
+#define ParamCLI_CHTargetLimitHandling               (PT_CLITargetLimitHandling)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHTargetLimitHandling)) & CLI_CHTargetLimitHandlingMask) >> CLI_CHTargetLimitHandlingShift)
+// 'Modus Aktueller Status' bei AUS
+#define ParamCLI_CHModeFeedbackReturnOff             (PT_CLIModeFeedback)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHModeFeedbackReturnOff)) & CLI_CHModeFeedbackReturnOffMask) >> CLI_CHModeFeedbackReturnOffShift)
+// Erhöhen / Verringern um
+#define ParamCLI_CHRelativTempChangeHeating          (knx.paramByte(CLI_ParamCalcIndex(CLI_CHRelativTempChangeHeating)))
+// Minimal
+#define ParamCLI_CHTargetMinHeating                  (knx.paramFloat(CLI_ParamCalcIndex(CLI_CHTargetMinHeating), Float_Enc_DPT9))
+// Maximal
+#define ParamCLI_CHTargetMaxHeating                  (knx.paramFloat(CLI_ParamCalcIndex(CLI_CHTargetMaxHeating), Float_Enc_DPT9))
+// Initialwert
+#define ParamCLI_CHTargetDefaultHeating              (knx.paramFloat(CLI_ParamCalcIndex(CLI_CHTargetDefaultHeating), Float_Enc_DPT9))
+// Minimal
+#define ParamCLI_CHTargetMinCooling                  (knx.paramFloat(CLI_ParamCalcIndex(CLI_CHTargetMinCooling), Float_Enc_DPT9))
+// Maximal
+#define ParamCLI_CHTargetMaxCooling                  (knx.paramFloat(CLI_ParamCalcIndex(CLI_CHTargetMaxCooling), Float_Enc_DPT9))
+// Initialwert
+#define ParamCLI_CHTargetDefaultCooling              (knx.paramFloat(CLI_ParamCalcIndex(CLI_CHTargetDefaultCooling), Float_Enc_DPT9))
+// Nach Gerätestart
+#define ParamCLI_CHInitTemp                          (PT_CLIInit)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHInitTemp)) & CLI_CHInitTempMask) >> CLI_CHInitTempShift)
+// Initialwert
+#define ParamCLI_CHDefaultMode                       (PT_CLIDefaultHVAC)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHDefaultMode)))
+// Nach Gerätestart
+#define ParamCLI_CHInitMode                          (PT_CLIInit)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHInitMode)) & CLI_CHInitModeMask) >> CLI_CHInitModeShift)
+// Nach Gerätestart
+#define ParamCLI_CHInitPower                         (PT_CLIInit)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHInitPower)) & CLI_CHInitPowerMask) >> CLI_CHInitPowerShift)
+// Initialwert
+#define ParamCLI_CHDefaultPower                      ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHDefaultPower)) & CLI_CHDefaultPowerMask))
+// Getrennte Solltemperatur für Heiz- und Kühlbetrieb
+#define ParamCLI_CH2TargetTemp                       ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CH2TargetTemp)) & CLI_CH2TargetTempMask))
+// Erhöhen / Verringern um
+#define ParamCLI_CHRelativTempChangeCooling          (knx.paramByte(CLI_ParamCalcIndex(CLI_CHRelativTempChangeCooling)))
+// Modusauswahl über
+#define ParamCLI_CHControlMode1                      (PT_CLIControlMode)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHControlMode1)) & CLI_CHControlMode1Mask) >> CLI_CHControlMode1Shift)
+// Temperaturregelung über
+#define ParamCLI_CHControlTemperature1               (PT_CLIControlTemperature)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHControlTemperature1)) & CLI_CHControlTemperature1Mask)
+// Objekt zum vollständigen Ein-/Ausschalten
+#define ParamCLI_CHFullPowerOff1                     ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHFullPowerOff1)) & CLI_CHFullPowerOff1Mask))
+// Wartezeit nach Einschalten
+#define ParamCLI_CHWaitTimeAfterPowerUp1             (PT_CLIWaitTimeAfterPowerUp)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWaitTimeAfterPowerUp1)) & CLI_CHWaitTimeAfterPowerUp1Mask)
+// Heizungstyp
+#define ParamCLI_CHPIPreset1                         (PT_CLIPIPreset)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHPIPreset1)) & CLI_CHPIPreset1Mask) >> CLI_CHPIPreset1Shift)
+// Proportional
+#define ParamCLI_CHPII1                              (knx.paramByte(CLI_ParamCalcIndex(CLI_CHPII1)))
+// Nachstellzeit
+#define ParamCLI_CHPID1                              (knx.paramByte(CLI_ParamCalcIndex(CLI_CHPID1)))
+// Maximale Genauigkeit der Solltemperatur
+#define ParamCLI_CHTargetTempRounding1               ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHTargetTempRounding1)) & CLI_CHTargetTempRounding1Mask) >> CLI_CHTargetTempRounding1Shift)
+// Ist Aktiv Rückmeldung
+#define ParamCLI_CHIsActive1                         (PT_CLIIsActive)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHIsActive1)) & CLI_CHIsActive1Mask) >> CLI_CHIsActive1Shift)
+// Pulsweitenmodulation Periode
+#define ParamCLI_CHPWM1                              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHPWM1)))
+// Modusauswahl über
+#define ParamCLI_CHControlMode2                      (PT_CLIControlMode)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHControlMode2)) & CLI_CHControlMode2Mask) >> CLI_CHControlMode2Shift)
+// Temperaturregelung über
+#define ParamCLI_CHControlTemperature2               (PT_CLIControlTemperature)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHControlTemperature2)) & CLI_CHControlTemperature2Mask)
+// Objekt zum vollständigen Ein-/Ausschalten
+#define ParamCLI_CHFullPowerOff2                     ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHFullPowerOff2)) & CLI_CHFullPowerOff2Mask))
+// Wartezeit nach Einschalten
+#define ParamCLI_CHWaitTimeAfterPowerUp2             (PT_CLIWaitTimeAfterPowerUp)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWaitTimeAfterPowerUp2)) & CLI_CHWaitTimeAfterPowerUp2Mask)
+// Heizungstyp
+#define ParamCLI_CHPIPreset2                         (PT_CLIPIPreset)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHPIPreset2)) & CLI_CHPIPreset2Mask) >> CLI_CHPIPreset2Shift)
+// Proportional
+#define ParamCLI_CHPII2                              (knx.paramByte(CLI_ParamCalcIndex(CLI_CHPII2)))
+// Nachstellzeit
+#define ParamCLI_CHPID2                              (knx.paramByte(CLI_ParamCalcIndex(CLI_CHPID2)))
+// Maximale Genauigkeit der Solltemperatur
+#define ParamCLI_CHTargetTempRounding2               ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHTargetTempRounding2)) & CLI_CHTargetTempRounding2Mask) >> CLI_CHTargetTempRounding2Shift)
+// Ist Aktiv Rückmeldung
+#define ParamCLI_CHIsActive2                         (PT_CLIIsActive)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHIsActive2)) & CLI_CHIsActive2Mask) >> CLI_CHIsActive2Shift)
+// Pulsweitenmodulation Periode
+#define ParamCLI_CHPWM2                              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHPWM2)))
+// Durch
+#define ParamCLI_CHCoolDeviceSelection               (PT_CLIDeviceSelection)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHCoolDeviceSelection)) & CLI_CHCoolDeviceSelectionMask) >> CLI_CHCoolDeviceSelectionShift)
+// Kühlen im Winterbetrieb gesperrt
+#define ParamCLI_CHCoolDeactiveInWinter              ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHCoolDeactiveInWinter)) & CLI_CHCoolDeactiveInWinterMask))
+// Durch
+#define ParamCLI_CHHeatDeviceSelection               (PT_CLIDeviceSelection)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHHeatDeviceSelection)) & CLI_CHHeatDeviceSelectionMask) >> CLI_CHHeatDeviceSelectionShift)
+// Heizen im Sommerbetrieb gesperrt
+#define ParamCLI_CHHeatDeactiveInSummer              ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHHeatDeactiveInSummer)) & CLI_CHHeatDeactiveInSummerMask))
+// Durch
+#define ParamCLI_CHDehumDeviceSelection              (PT_CLIDeviceSelection)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHDehumDeviceSelection)) & CLI_CHDehumDeviceSelectionMask) >> CLI_CHDehumDeviceSelectionShift)
+// Durch
+#define ParamCLI_CHFanDeviceSelection                (PT_CLIDeviceSelection)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHFanDeviceSelection)) & CLI_CHFanDeviceSelectionMask) >> CLI_CHFanDeviceSelectionShift)
+// Durch
+#define ParamCLI_CHAutoDeviceSelection               (PT_CLIDeviceSelection)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHAutoDeviceSelection)) & CLI_CHAutoDeviceSelectionMask) >> CLI_CHAutoDeviceSelectionShift)
+// Kühlen Auswahl durch
+#define ParamCLI_CHAutoCoolDeviceSelection           (PT_CLIAutomaticDevice)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHAutoCoolDeviceSelection)) & CLI_CHAutoCoolDeviceSelectionMask) >> CLI_CHAutoCoolDeviceSelectionShift)
+// Heizen Auswahl durch
+#define ParamCLI_CHAutoHeatDeviceSelection           (PT_CLIAutomaticDevice)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHAutoHeatDeviceSelection)) & CLI_CHAutoHeatDeviceSelectionMask)
+// Entfeuchten Auswahl durch
+#define ParamCLI_CHAutoDehumDeviceSelection          (PT_CLIAutomaticDevice)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHAutoDehumDeviceSelection)) & CLI_CHAutoDehumDeviceSelectionMask) >> CLI_CHAutoDehumDeviceSelectionShift)
+// Ventilator Auswahl durch
+#define ParamCLI_CHAutoFanDeviceSelection            (PT_CLIAutomaticDevice)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHAutoFanDeviceSelection)) & CLI_CHAutoFanDeviceSelectionMask)
+// Manuelle Änderung am Kühl-/Heizsystem
+#define ParamCLI_CHBehaviorOnDeviceChange            (PT_CLIBehaviorDeviceChange)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHBehaviorOnDeviceChange)) & CLI_CHBehaviorOnDeviceChangeMask) >> CLI_CHBehaviorOnDeviceChangeShift)
+// Kühlen im Winterbetrieb erlaubt
+#define ParamCLI_CHCoolingWinterAllowed              ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHCoolingWinterAllowed)) & CLI_CHCoolingWinterAllowedMask))
+// Heizen im Sommerbetrieb erlaubt
+#define ParamCLI_CHHeatingSummerAllowed              ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHHeatingSummerAllowed)) & CLI_CHHeatingSummerAllowedMask))
+// 
+#define ParamCLI_CHFallbackAutoWaitTimeDelayBase     ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHFallbackAutoWaitTimeDelayBase)) & CLI_CHFallbackAutoWaitTimeDelayBaseMask) >> CLI_CHFallbackAutoWaitTimeDelayBaseShift)
+// 
+#define ParamCLI_CHFallbackAutoWaitTimeDelayTime     (knx.paramWord(CLI_ParamCalcIndex(CLI_CHFallbackAutoWaitTimeDelayTime)) & CLI_CHFallbackAutoWaitTimeDelayTimeMask)
+//  (in Millisekunden)
+#define ParamCLI_CHFallbackAutoWaitTimeDelayTimeMS   (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHFallbackAutoWaitTimeDelayTime))))
+// Hysterese Kühlen
+#define ParamCLI_CHHysteresisCooling                 (PT_CLIHysteresis)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHHysteresisCooling)) & CLI_CHHysteresisCoolingMask) >> CLI_CHHysteresisCoolingShift)
+// Hysterese Heizen
+#define ParamCLI_CHHysteresisHeating                 (PT_CLIHysteresis)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHHysteresisHeating)) & CLI_CHHysteresisHeatingMask)
+// Fenster offen Behandlung
+#define ParamCLI_CHWindowOpenEnabled                 ((bool)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenEnabled)) & CLI_CHWindowOpenEnabledMask))
+// Ausführen
+#define ParamCLI_CHWindowOpenCondition1              (PT_CLIWindowOpenCondition)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenCondition1)) & CLI_CHWindowOpenCondition1Mask) >> CLI_CHWindowOpenCondition1Shift)
+// Aktion
+#define ParamCLI_CHWindowOpenAction1                 (PT_CLIWindowOpenAction)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenAction1)) & CLI_CHWindowOpenAction1Mask)
+// Nach Einheit
+#define ParamCLI_CHWindowOpenDelayBase1              ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayBase1)) & CLI_CHWindowOpenDelayBase1Mask) >> CLI_CHWindowOpenDelayBase1Shift)
+// Nach
+#define ParamCLI_CHWindowOpenDelayTime1              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime1)) & CLI_CHWindowOpenDelayTime1Mask)
+// Nach (in Millisekunden)
+#define ParamCLI_CHWindowOpenDelayTime1MS            (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime1))))
+// Kühlbetrieb plus / Heizbetrieb minus
+#define ParamCLI_CHWindowOpenTempCorrection1         (knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenTempCorrection1)))
+// Ausführen
+#define ParamCLI_CHWindowOpenCondition2              (PT_CLIWindowOpenCondition)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenCondition2)) & CLI_CHWindowOpenCondition2Mask) >> CLI_CHWindowOpenCondition2Shift)
+// Aktion
+#define ParamCLI_CHWindowOpenAction2                 (PT_CLIWindowOpenAction)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenAction2)) & CLI_CHWindowOpenAction2Mask)
+// Nach Einheit
+#define ParamCLI_CHWindowOpenDelayBase2              ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayBase2)) & CLI_CHWindowOpenDelayBase2Mask) >> CLI_CHWindowOpenDelayBase2Shift)
+// Nach
+#define ParamCLI_CHWindowOpenDelayTime2              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime2)) & CLI_CHWindowOpenDelayTime2Mask)
+// Nach (in Millisekunden)
+#define ParamCLI_CHWindowOpenDelayTime2MS            (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime2))))
+// Kühlbetrieb plus / Heizbetrieb minus
+#define ParamCLI_CHWindowOpenTempCorrection2         (knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenTempCorrection2)))
+// Ausführen
+#define ParamCLI_CHWindowOpenCondition3              (PT_CLIWindowOpenCondition)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenCondition3)) & CLI_CHWindowOpenCondition3Mask) >> CLI_CHWindowOpenCondition3Shift)
+// Aktion
+#define ParamCLI_CHWindowOpenAction3                 (PT_CLIWindowOpenAction)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenAction3)) & CLI_CHWindowOpenAction3Mask)
+// Nach Einheit
+#define ParamCLI_CHWindowOpenDelayBase3              ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayBase3)) & CLI_CHWindowOpenDelayBase3Mask) >> CLI_CHWindowOpenDelayBase3Shift)
+// Nach
+#define ParamCLI_CHWindowOpenDelayTime3              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime3)) & CLI_CHWindowOpenDelayTime3Mask)
+// Nach (in Millisekunden)
+#define ParamCLI_CHWindowOpenDelayTime3MS            (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime3))))
+// Kühlbetrieb plus / Heizbetrieb minus
+#define ParamCLI_CHWindowOpenTempCorrection3         (knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenTempCorrection3)))
+// Ausführen
+#define ParamCLI_CHWindowOpenCondition4              (PT_CLIWindowOpenCondition)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenCondition4)) & CLI_CHWindowOpenCondition4Mask) >> CLI_CHWindowOpenCondition4Shift)
+// Aktion
+#define ParamCLI_CHWindowOpenAction4                 (PT_CLIWindowOpenAction)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenAction4)) & CLI_CHWindowOpenAction4Mask)
+// Nach Einheit
+#define ParamCLI_CHWindowOpenDelayBase4              ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayBase4)) & CLI_CHWindowOpenDelayBase4Mask) >> CLI_CHWindowOpenDelayBase4Shift)
+// Nach
+#define ParamCLI_CHWindowOpenDelayTime4              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime4)) & CLI_CHWindowOpenDelayTime4Mask)
+// Nach (in Millisekunden)
+#define ParamCLI_CHWindowOpenDelayTime4MS            (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime4))))
+// Kühlbetrieb plus / Heizbetrieb minus
+#define ParamCLI_CHWindowOpenTempCorrection4         (knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenTempCorrection4)))
+// Ausführen
+#define ParamCLI_CHWindowOpenCondition5              (PT_CLIWindowOpenCondition)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenCondition5)) & CLI_CHWindowOpenCondition5Mask) >> CLI_CHWindowOpenCondition5Shift)
+// Aktion
+#define ParamCLI_CHWindowOpenAction5                 (PT_CLIWindowOpenAction)(knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenAction5)) & CLI_CHWindowOpenAction5Mask)
+// Nach Einheit
+#define ParamCLI_CHWindowOpenDelayBase5              ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayBase5)) & CLI_CHWindowOpenDelayBase5Mask) >> CLI_CHWindowOpenDelayBase5Shift)
+// Nach
+#define ParamCLI_CHWindowOpenDelayTime5              (knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime5)) & CLI_CHWindowOpenDelayTime5Mask)
+// Nach (in Millisekunden)
+#define ParamCLI_CHWindowOpenDelayTime5MS            (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowOpenDelayTime5))))
+// Kühlbetrieb plus / Heizbetrieb minus
+#define ParamCLI_CHWindowOpenTempCorrection5         (knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowOpenTempCorrection5)))
+// Aktionen rückgängig
+#define ParamCLI_CHWindowClose                       (PT_CLIWindowClose)((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowClose)) & CLI_CHWindowCloseMask) >> CLI_CHWindowCloseShift)
+// 
+#define ParamCLI_CHWindowCloseWaitTimeDelayBase      ((knx.paramByte(CLI_ParamCalcIndex(CLI_CHWindowCloseWaitTimeDelayBase)) & CLI_CHWindowCloseWaitTimeDelayBaseMask) >> CLI_CHWindowCloseWaitTimeDelayBaseShift)
+// 
+#define ParamCLI_CHWindowCloseWaitTimeDelayTime      (knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowCloseWaitTimeDelayTime)) & CLI_CHWindowCloseWaitTimeDelayTimeMask)
+//  (in Millisekunden)
+#define ParamCLI_CHWindowCloseWaitTimeDelayTimeMS    (paramDelay(knx.paramWord(CLI_ParamCalcIndex(CLI_CHWindowCloseWaitTimeDelayTime))))
+
+// deprecated
+#define CLI_KoOffset 800
+
+// Communication objects per channel (multiple occurrence)
+#define CLI_KoBlockOffset 800
+#define CLI_KoBlockSize 43
+
+#define CLI_KoCalcNumber(index) (index + CLI_KoBlockOffset + _channelIndex * CLI_KoBlockSize)
+#define CLI_KoCalcIndex(number) ((number >= CLI_KoCalcNumber(0) && number < CLI_KoCalcNumber(CLI_KoBlockSize)) ? (number - CLI_KoBlockOffset) % CLI_KoBlockSize : -1)
+#define CLI_KoCalcChannel(number) ((number >= CLI_KoBlockOffset && number < CLI_KoBlockOffset + CLI_ChannelCount * CLI_KoBlockSize) ? (number - CLI_KoBlockOffset) / CLI_KoBlockSize : -1)
+
+#define CLI_KoCModeSelection 0
+#define CLI_KoCModeSelectionFb 1
+#define CLI_KoCPower 2
+#define CLI_KoCPowerFb 3
+#define CLI_KoCTargetTemp 4
+#define CLI_KoCTargetTempFb 5
+#define CLI_KoCTargetTempRelativ 6
+#define CLI_KoCRoomTemp 7
+#define CLI_KoCActiveMode 8
+#define CLI_KoCAutoReqHeat 9
+#define CLI_KoCAutoReqCool 10
+#define CLI_KoCAutoReqDehum 11
+#define CLI_KoCAutoReqFan 12
+#define CLI_KoCKo13 13
+#define CLI_KoCKo14 14
+#define CLI_KoCKo15 15
+#define CLI_KoCKo16 16
+#define CLI_KoCKo17 17
+#define CLI_KoCKo18 18
+#define CLI_KoCKo19 19
+#define CLI_KoCKo20 20
+#define CLI_KoCDev1Power 21
+#define CLI_KoCDev1Set 22
+#define CLI_KoCDev1PWM 23
+#define CLI_KoCDev1SetFb 24
+#define CLI_KoCDev1RoomTemp 25
+#define CLI_KoCDev1IsActive 26
+#define CLI_KoCKo26 27
+#define CLI_KoCKo27 28
+#define CLI_KoCKo28 29
+#define CLI_KoCKo29 30
+#define CLI_KoCKo30 31
+#define CLI_KoCKo31 32
+#define CLI_KoCKo32 33
+#define CLI_KoCKo33 34
+#define CLI_KoCDev2Power 35
+#define CLI_KoCDev2Set 36
+#define CLI_KoCDev2PWM 37
+#define CLI_KoCDev2SetFb 38
+#define CLI_KoCDev2RoomTemp 39
+#define CLI_KoCDev2IsActive 40
+#define CLI_KoCWindowOpen 41
+#define CLI_KoCWindowOpenAlarm 42
+
+// {{0:HVAC %C%}}: Modus Auswahl
+#define KoCLI_CModeSelection                      (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCModeSelection)))
+// {{0:HVAC %C%}}: Modus Aktuelle Auswahl
+#define KoCLI_CModeSelectionFb                    (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCModeSelectionFb)))
+// {{0:HVAC %C%}}: Ein/Aus
+#define KoCLI_CPower                              (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCPower)))
+// {{0:HVAC %C%}}: Aktueller Ein/Aus Zustand
+#define KoCLI_CPowerFb                            (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCPowerFb)))
+// {{0:HVAC %C%}}: Solltemperatur
+#define KoCLI_CTargetTemp                         (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCTargetTemp)))
+// {{0:HVAC %C%}}: Aktuelle Solltemperatur
+#define KoCLI_CTargetTempFb                       (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCTargetTempFb)))
+// {{0:HVAC %C%}}: Solltemperatur verringern/erhöhen
+#define KoCLI_CTargetTempRelativ                  (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCTargetTempRelativ)))
+// {{0:HVAC %C%}}: Raumtemperatur
+#define KoCLI_CRoomTemp                           (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCRoomTemp)))
+// {{0:HVAC %C%}}: Aktiver Modus
+#define KoCLI_CActiveMode                         (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCActiveMode)))
+// {{0:HVAC %C%}}: Anforderung Heizen für Automatik
+#define KoCLI_CAutoReqHeat                        (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCAutoReqHeat)))
+// {{0:HVAC %C%}}: Anforderung Kühlen für Automatik
+#define KoCLI_CAutoReqCool                        (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCAutoReqCool)))
+// {{0:HVAC %C%}}: Anforderung Entfeuchtung für Automatik
+#define KoCLI_CAutoReqDehum                       (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCAutoReqDehum)))
+// {{0:HVAC %C%}}: Anforderung Lüfter für Automatik
+#define KoCLI_CAutoReqFan                         (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCAutoReqFan)))
+// 
+#define KoCLI_CKo13                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo13)))
+// 
+#define KoCLI_CKo14                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo14)))
+// 
+#define KoCLI_CKo15                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo15)))
+// 
+#define KoCLI_CKo16                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo16)))
+// 
+#define KoCLI_CKo17                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo17)))
+// 
+#define KoCLI_CKo18                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo18)))
+// 
+#define KoCLI_CKo19                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo19)))
+// 
+#define KoCLI_CKo20                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo20)))
+// {{0:HVAC %C% %CLI_ClimateDevice1Name%}}: Strom
+#define KoCLI_CDev1Power                          (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev1Power)))
+// {{0:HVAC %C% %CLI_ClimateDevice1Name%}}: Solltemperatur
+#define KoCLI_CDev1Set                            (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev1Set)))
+// {{0:HVAC %CLI_ClimateDevice1Name% %C%}}: Pulsweitenmodulation
+#define KoCLI_CDev1PWM                            (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev1PWM)))
+// {{0:HVAC %C% %CLI_ClimateDevice1Name%}}: Solltemperatur Rückmeldung
+#define KoCLI_CDev1SetFb                          (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev1SetFb)))
+// 
+#define KoCLI_CDev1RoomTemp                       (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev1RoomTemp)))
+// 
+#define KoCLI_CDev1IsActive                       (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev1IsActive)))
+// 
+#define KoCLI_CKo26                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo26)))
+// 
+#define KoCLI_CKo27                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo27)))
+// 
+#define KoCLI_CKo28                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo28)))
+// 
+#define KoCLI_CKo29                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo29)))
+// 
+#define KoCLI_CKo30                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo30)))
+// 
+#define KoCLI_CKo31                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo31)))
+// 
+#define KoCLI_CKo32                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo32)))
+// 
+#define KoCLI_CKo33                               (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCKo33)))
+// {{0:HVAC %C%: %CLI_ClimateDevice2Name%}}: Strom
+#define KoCLI_CDev2Power                          (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev2Power)))
+// {{0:HVAC %C%: %CLI_ClimateDevice2Name%}}: Solltemperatur
+#define KoCLI_CDev2Set                            (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev2Set)))
+// {{0:HVAC %CLI_ClimateDevice2Name% %C%}}: Pulsweitenmodulation
+#define KoCLI_CDev2PWM                            (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev2PWM)))
+// {{0:HVAC %C%: %CLI_ClimateDevice2Name%}}: Solltemperatur Rückmeldung
+#define KoCLI_CDev2SetFb                          (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev2SetFb)))
+// 
+#define KoCLI_CDev2RoomTemp                       (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev2RoomTemp)))
+// 
+#define KoCLI_CDev2IsActive                       (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCDev2IsActive)))
+// {{0:HVAC %C%}}: Fenster offen
+#define KoCLI_CWindowOpen                         (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCWindowOpen)))
+// {{0:HVAC %C%}}: Fenster offen Alarm
+#define KoCLI_CWindowOpenAlarm                    (knx.getGroupObject(CLI_KoCalcNumber(CLI_KoCWindowOpenAlarm)))
+
+#define HTA_OperationMode                       1030      // 2 Bits, Bit 7-6
 #define     HTA_OperationModeMask 0xC0
 #define     HTA_OperationModeShift 6
-#define HTA_OperationModeChange                 115      // 2 Bits, Bit 5-4
+#define HTA_OperationModeChange                 1030      // 2 Bits, Bit 5-4
 #define     HTA_OperationModeChangeMask 0x30
 #define     HTA_OperationModeChangeShift 4
-#define HTA_OperationModeCyclicBase             116      // 2 Bits, Bit 7-6
+#define HTA_OperationModeCyclicBase             1031      // 2 Bits, Bit 7-6
 #define     HTA_OperationModeCyclicBaseMask 0xC0
 #define     HTA_OperationModeCyclicBaseShift 6
-#define HTA_OperationModeCyclicTime             116      // 14 Bits, Bit 13-0
+#define HTA_OperationModeCyclicTime             1031      // 14 Bits, Bit 13-0
 #define     HTA_OperationModeCyclicTimeMask 0x3FFF
 #define     HTA_OperationModeCyclicTimeShift 0
-#define HTA_StuckProtection                     118      // uint8_t
-#define HTA_PowerRestoreRequestValues           119      // 1 Bit, Bit 7
+#define HTA_StuckProtection                     1033      // uint8_t
+#define HTA_PowerRestoreRequestValues           1034      // 1 Bit, Bit 7
 #define     HTA_PowerRestoreRequestValuesMask 0x80
 #define     HTA_PowerRestoreRequestValuesShift 7
-#define HTA_ObjectsMaxSetValueHeating           120      // 1 Bit, Bit 7
+#define HTA_ObjectsMaxSetValueHeating           1035      // 1 Bit, Bit 7
 #define     HTA_ObjectsMaxSetValueHeatingMask 0x80
 #define     HTA_ObjectsMaxSetValueHeatingShift 7
-#define HTA_ObjectsMaxSetValueCooling           120      // 1 Bit, Bit 6
+#define HTA_ObjectsMaxSetValueCooling           1035      // 1 Bit, Bit 6
 #define     HTA_ObjectsMaxSetValueCoolingMask 0x40
 #define     HTA_ObjectsMaxSetValueCoolingShift 6
-#define HTA_ObjectsMaxSetValueCombined          120      // 1 Bit, Bit 5
+#define HTA_ObjectsMaxSetValueCombined          1035      // 1 Bit, Bit 5
 #define     HTA_ObjectsMaxSetValueCombinedMask 0x20
 #define     HTA_ObjectsMaxSetValueCombinedShift 5
-#define HTA_ObjectsMaxSetValueHeatingCyclicBase 121      // 2 Bits, Bit 7-6
+#define HTA_ObjectsMaxSetValueHeatingCyclicBase 1036      // 2 Bits, Bit 7-6
 #define     HTA_ObjectsMaxSetValueHeatingCyclicBaseMask 0xC0
 #define     HTA_ObjectsMaxSetValueHeatingCyclicBaseShift 6
-#define HTA_ObjectsMaxSetValueHeatingCyclicTime 121      // 14 Bits, Bit 13-0
+#define HTA_ObjectsMaxSetValueHeatingCyclicTime 1036      // 14 Bits, Bit 13-0
 #define     HTA_ObjectsMaxSetValueHeatingCyclicTimeMask 0x3FFF
 #define     HTA_ObjectsMaxSetValueHeatingCyclicTimeShift 0
-#define HTA_ObjectsMaxSetValueCoolingCyclicBase 123      // 2 Bits, Bit 7-6
+#define HTA_ObjectsMaxSetValueCoolingCyclicBase 1038      // 2 Bits, Bit 7-6
 #define     HTA_ObjectsMaxSetValueCoolingCyclicBaseMask 0xC0
 #define     HTA_ObjectsMaxSetValueCoolingCyclicBaseShift 6
-#define HTA_ObjectsMaxSetValueCoolingCyclicTime 123      // 14 Bits, Bit 13-0
+#define HTA_ObjectsMaxSetValueCoolingCyclicTime 1038      // 14 Bits, Bit 13-0
 #define     HTA_ObjectsMaxSetValueCoolingCyclicTimeMask 0x3FFF
 #define     HTA_ObjectsMaxSetValueCoolingCyclicTimeShift 0
-#define HTA_ObjectsMaxSetValueCombinedCyclicBase 125      // 2 Bits, Bit 7-6
+#define HTA_ObjectsMaxSetValueCombinedCyclicBase 1040      // 2 Bits, Bit 7-6
 #define     HTA_ObjectsMaxSetValueCombinedCyclicBaseMask 0xC0
 #define     HTA_ObjectsMaxSetValueCombinedCyclicBaseShift 6
-#define HTA_ObjectsMaxSetValueCombinedCyclicTime 125      // 14 Bits, Bit 13-0
+#define HTA_ObjectsMaxSetValueCombinedCyclicTime 1040      // 14 Bits, Bit 13-0
 #define     HTA_ObjectsMaxSetValueCombinedCyclicTimeMask 0x3FFF
 #define     HTA_ObjectsMaxSetValueCombinedCyclicTimeShift 0
-#define HTA_ObjectsHeatingCoolingRequest        127      // 1 Bit, Bit 7
+#define HTA_ObjectsHeatingCoolingRequest        1042      // 1 Bit, Bit 7
 #define     HTA_ObjectsHeatingCoolingRequestMask 0x80
 #define     HTA_ObjectsHeatingCoolingRequestShift 7
 
-// Verfügbare Kanäle
-#define ParamHTA_VisibleChannels                     (knx.paramByte(HTA_VisibleChannels))
 // Betriebsmodus
 #define ParamHTA_OperationMode                       ((knx.paramByte(HTA_OperationMode) & HTA_OperationModeMask) >> HTA_OperationModeShift)
 // Umschaltung Heizen/Kühlen
@@ -330,7 +965,7 @@
 #define HTA_ChannelCount 12
 
 // Parameter per channel
-#define HTA_ParamBlockOffset 134
+#define HTA_ParamBlockOffset 1049
 #define HTA_ParamBlockSize 95
 #define HTA_ParamCalcIndex(index) (index + HTA_ParamBlockOffset + _channelIndex * HTA_ParamBlockSize)
 
@@ -1129,62 +1764,62 @@
 // 
 #define KoHTA_ChScene                             (knx.getGroupObject(HTA_KoCalcNumber(HTA_KoChScene)))
 
-#define WIRE_WireError                           1274      // 1 Bit, Bit 7
+#define WIRE_WireError                           2189      // 1 Bit, Bit 7
 #define     WIRE_WireErrorMask 0x80
 #define     WIRE_WireErrorShift 7
-#define WIRE_IdSearch                            1274      // 1 Bit, Bit 4
+#define WIRE_IdSearch                            2189      // 1 Bit, Bit 4
 #define     WIRE_IdSearchMask 0x10
 #define     WIRE_IdSearchShift 4
-#define WIRE_IButton1                            1274      // 1 Bit, Bit 3
+#define WIRE_IButton1                            2189      // 1 Bit, Bit 3
 #define     WIRE_IButton1Mask 0x08
 #define     WIRE_IButton1Shift 3
-#define WIRE_IButton2                            1274      // 1 Bit, Bit 2
+#define WIRE_IButton2                            2189      // 1 Bit, Bit 2
 #define     WIRE_IButton2Mask 0x04
 #define     WIRE_IButton2Shift 2
-#define WIRE_IButton3                            1274      // 1 Bit, Bit 1
+#define WIRE_IButton3                            2189      // 1 Bit, Bit 1
 #define     WIRE_IButton3Mask 0x02
 #define     WIRE_IButton3Shift 1
-#define WIRE_Group1                              1275      // 1 Bit, Bit 7
+#define WIRE_Group1                              2190      // 1 Bit, Bit 7
 #define     WIRE_Group1Mask 0x80
 #define     WIRE_Group1Shift 7
-#define WIRE_Group2                              1275      // 1 Bit, Bit 6
+#define WIRE_Group2                              2190      // 1 Bit, Bit 6
 #define     WIRE_Group2Mask 0x40
 #define     WIRE_Group2Shift 6
-#define WIRE_Group3                              1275      // 1 Bit, Bit 5
+#define WIRE_Group3                              2190      // 1 Bit, Bit 5
 #define     WIRE_Group3Mask 0x20
 #define     WIRE_Group3Shift 5
-#define WIRE_Group4                              1275      // 1 Bit, Bit 4
+#define WIRE_Group4                              2190      // 1 Bit, Bit 4
 #define     WIRE_Group4Mask 0x10
 #define     WIRE_Group4Shift 4
-#define WIRE_Group5                              1275      // 1 Bit, Bit 3
+#define WIRE_Group5                              2190      // 1 Bit, Bit 3
 #define     WIRE_Group5Mask 0x08
 #define     WIRE_Group5Shift 3
-#define WIRE_Group6                              1275      // 1 Bit, Bit 2
+#define WIRE_Group6                              2190      // 1 Bit, Bit 2
 #define     WIRE_Group6Mask 0x04
 #define     WIRE_Group6Shift 2
-#define WIRE_Group7                              1275      // 1 Bit, Bit 1
+#define WIRE_Group7                              2190      // 1 Bit, Bit 1
 #define     WIRE_Group7Mask 0x02
 #define     WIRE_Group7Shift 1
-#define WIRE_Group8                              1275      // 1 Bit, Bit 0
+#define WIRE_Group8                              2190      // 1 Bit, Bit 0
 #define     WIRE_Group8Mask 0x01
 #define     WIRE_Group8Shift 0
-#define WIRE_Busmaster1RSTL                      1276      // 4 Bits, Bit 7-4
+#define WIRE_Busmaster1RSTL                      2191      // 4 Bits, Bit 7-4
 #define     WIRE_Busmaster1RSTLMask 0xF0
 #define     WIRE_Busmaster1RSTLShift 4
-#define WIRE_Busmaster1MSP                       1276      // 4 Bits, Bit 3-0
+#define WIRE_Busmaster1MSP                       2191      // 4 Bits, Bit 3-0
 #define     WIRE_Busmaster1MSPMask 0x0F
 #define     WIRE_Busmaster1MSPShift 0
-#define WIRE_Busmaster1W0L                       1277      // 4 Bits, Bit 7-4
+#define WIRE_Busmaster1W0L                       2192      // 4 Bits, Bit 7-4
 #define     WIRE_Busmaster1W0LMask 0xF0
 #define     WIRE_Busmaster1W0LShift 4
-#define WIRE_Busmaster1REC0                      1277      // 4 Bits, Bit 3-0
+#define WIRE_Busmaster1REC0                      2192      // 4 Bits, Bit 3-0
 #define     WIRE_Busmaster1REC0Mask 0x0F
 #define     WIRE_Busmaster1REC0Shift 0
-#define WIRE_Busmaster1WPU                       1278      // 4 Bits, Bit 7-4
+#define WIRE_Busmaster1WPU                       2193      // 4 Bits, Bit 7-4
 #define     WIRE_Busmaster1WPUMask 0xF0
 #define     WIRE_Busmaster1WPUShift 4
-#define WIRE_VisibleChannels                     1279      // uint8_t
-#define WIRE_BusMasterCount                      1280      // 2 Bits, Bit 7-6
+#define WIRE_VisibleChannels                     2194      // uint8_t
+#define WIRE_BusMasterCount                      2195      // 2 Bits, Bit 7-6
 #define     WIRE_BusMasterCountMask 0xC0
 #define     WIRE_BusMasterCountShift 6
 
@@ -1270,7 +1905,7 @@
 #define WIRE_ChannelCount 30
 
 // Parameter per channel
-#define WIRE_ParamBlockOffset 1281
+#define WIRE_ParamBlockOffset 2196
 #define WIRE_ParamBlockSize 18
 #define WIRE_ParamCalcIndex(index) (index + WIRE_ParamBlockOffset + _channelIndex * WIRE_ParamBlockSize)
 
@@ -1549,272 +2184,272 @@
 // Dynamic
 #define KoWIRE_KOs                                 (knx.getGroupObject(WIRE_KoCalcNumber(WIRE_KoKOs)))
 
-#define LOG_VisibleChannels                     1821      // uint8_t
-#define LOG_VacationKo                          1822      // 1 Bit, Bit 7
+#define LOG_VisibleChannels                     2736      // uint8_t
+#define LOG_VacationKo                          2737      // 1 Bit, Bit 7
 #define     LOG_VacationKoMask 0x80
 #define     LOG_VacationKoShift 7
-#define LOG_HolidayKo                           1822      // 1 Bit, Bit 6
+#define LOG_HolidayKo                           2737      // 1 Bit, Bit 6
 #define     LOG_HolidayKoMask 0x40
 #define     LOG_HolidayKoShift 6
-#define LOG_VacationRead                        1822      // 1 Bit, Bit 5
+#define LOG_VacationRead                        2737      // 1 Bit, Bit 5
 #define     LOG_VacationReadMask 0x20
 #define     LOG_VacationReadShift 5
-#define LOG_HolidaySend                         1822      // 1 Bit, Bit 4
+#define LOG_HolidaySend                         2737      // 1 Bit, Bit 4
 #define     LOG_HolidaySendMask 0x10
 #define     LOG_HolidaySendShift 4
-#define LOG_Neujahr                             1823      // 1 Bit, Bit 7
+#define LOG_Neujahr                             2738      // 1 Bit, Bit 7
 #define     LOG_NeujahrMask 0x80
 #define     LOG_NeujahrShift 7
-#define LOG_DreiKoenige                         1823      // 1 Bit, Bit 6
+#define LOG_DreiKoenige                         2738      // 1 Bit, Bit 6
 #define     LOG_DreiKoenigeMask 0x40
 #define     LOG_DreiKoenigeShift 6
-#define LOG_Weiberfastnacht                     1823      // 1 Bit, Bit 5
+#define LOG_Weiberfastnacht                     2738      // 1 Bit, Bit 5
 #define     LOG_WeiberfastnachtMask 0x20
 #define     LOG_WeiberfastnachtShift 5
-#define LOG_Rosenmontag                         1823      // 1 Bit, Bit 4
+#define LOG_Rosenmontag                         2738      // 1 Bit, Bit 4
 #define     LOG_RosenmontagMask 0x10
 #define     LOG_RosenmontagShift 4
-#define LOG_Fastnachtsdienstag                  1823      // 1 Bit, Bit 3
+#define LOG_Fastnachtsdienstag                  2738      // 1 Bit, Bit 3
 #define     LOG_FastnachtsdienstagMask 0x08
 #define     LOG_FastnachtsdienstagShift 3
-#define LOG_Aschermittwoch                      1823      // 1 Bit, Bit 2
+#define LOG_Aschermittwoch                      2738      // 1 Bit, Bit 2
 #define     LOG_AschermittwochMask 0x04
 #define     LOG_AschermittwochShift 2
-#define LOG_Frauentag                           1823      // 1 Bit, Bit 1
+#define LOG_Frauentag                           2738      // 1 Bit, Bit 1
 #define     LOG_FrauentagMask 0x02
 #define     LOG_FrauentagShift 1
-#define LOG_Gruendonnerstag                     1823      // 1 Bit, Bit 0
+#define LOG_Gruendonnerstag                     2738      // 1 Bit, Bit 0
 #define     LOG_GruendonnerstagMask 0x01
 #define     LOG_GruendonnerstagShift 0
-#define LOG_Karfreitag                          1824      // 1 Bit, Bit 7
+#define LOG_Karfreitag                          2739      // 1 Bit, Bit 7
 #define     LOG_KarfreitagMask 0x80
 #define     LOG_KarfreitagShift 7
-#define LOG_Ostersonntag                        1824      // 1 Bit, Bit 6
+#define LOG_Ostersonntag                        2739      // 1 Bit, Bit 6
 #define     LOG_OstersonntagMask 0x40
 #define     LOG_OstersonntagShift 6
-#define LOG_Ostermontag                         1824      // 1 Bit, Bit 5
+#define LOG_Ostermontag                         2739      // 1 Bit, Bit 5
 #define     LOG_OstermontagMask 0x20
 #define     LOG_OstermontagShift 5
-#define LOG_TagDerArbeit                        1824      // 1 Bit, Bit 4
+#define LOG_TagDerArbeit                        2739      // 1 Bit, Bit 4
 #define     LOG_TagDerArbeitMask 0x10
 #define     LOG_TagDerArbeitShift 4
-#define LOG_Himmelfahrt                         1824      // 1 Bit, Bit 3
+#define LOG_Himmelfahrt                         2739      // 1 Bit, Bit 3
 #define     LOG_HimmelfahrtMask 0x08
 #define     LOG_HimmelfahrtShift 3
-#define LOG_Pfingstsonntag                      1824      // 1 Bit, Bit 2
+#define LOG_Pfingstsonntag                      2739      // 1 Bit, Bit 2
 #define     LOG_PfingstsonntagMask 0x04
 #define     LOG_PfingstsonntagShift 2
-#define LOG_Pfingstmontag                       1824      // 1 Bit, Bit 1
+#define LOG_Pfingstmontag                       2739      // 1 Bit, Bit 1
 #define     LOG_PfingstmontagMask 0x02
 #define     LOG_PfingstmontagShift 1
-#define LOG_Fronleichnam                        1824      // 1 Bit, Bit 0
+#define LOG_Fronleichnam                        2739      // 1 Bit, Bit 0
 #define     LOG_FronleichnamMask 0x01
 #define     LOG_FronleichnamShift 0
-#define LOG_Friedensfest                        1825      // 1 Bit, Bit 7
+#define LOG_Friedensfest                        2740      // 1 Bit, Bit 7
 #define     LOG_FriedensfestMask 0x80
 #define     LOG_FriedensfestShift 7
-#define LOG_MariaHimmelfahrt                    1825      // 1 Bit, Bit 6
+#define LOG_MariaHimmelfahrt                    2740      // 1 Bit, Bit 6
 #define     LOG_MariaHimmelfahrtMask 0x40
 #define     LOG_MariaHimmelfahrtShift 6
-#define LOG_DeutscheEinheit                     1825      // 1 Bit, Bit 5
+#define LOG_DeutscheEinheit                     2740      // 1 Bit, Bit 5
 #define     LOG_DeutscheEinheitMask 0x20
 #define     LOG_DeutscheEinheitShift 5
-#define LOG_Reformationstag                     1825      // 1 Bit, Bit 4
+#define LOG_Reformationstag                     2740      // 1 Bit, Bit 4
 #define     LOG_ReformationstagMask 0x10
 #define     LOG_ReformationstagShift 4
-#define LOG_Allerheiligen                       1825      // 1 Bit, Bit 3
+#define LOG_Allerheiligen                       2740      // 1 Bit, Bit 3
 #define     LOG_AllerheiligenMask 0x08
 #define     LOG_AllerheiligenShift 3
-#define LOG_BussBettag                          1825      // 1 Bit, Bit 2
+#define LOG_BussBettag                          2740      // 1 Bit, Bit 2
 #define     LOG_BussBettagMask 0x04
 #define     LOG_BussBettagShift 2
-#define LOG_Advent1                             1825      // 1 Bit, Bit 1
+#define LOG_Advent1                             2740      // 1 Bit, Bit 1
 #define     LOG_Advent1Mask 0x02
 #define     LOG_Advent1Shift 1
-#define LOG_Advent2                             1825      // 1 Bit, Bit 0
+#define LOG_Advent2                             2740      // 1 Bit, Bit 0
 #define     LOG_Advent2Mask 0x01
 #define     LOG_Advent2Shift 0
-#define LOG_Advent3                             1826      // 1 Bit, Bit 7
+#define LOG_Advent3                             2741      // 1 Bit, Bit 7
 #define     LOG_Advent3Mask 0x80
 #define     LOG_Advent3Shift 7
-#define LOG_Advent4                             1826      // 1 Bit, Bit 6
+#define LOG_Advent4                             2741      // 1 Bit, Bit 6
 #define     LOG_Advent4Mask 0x40
 #define     LOG_Advent4Shift 6
-#define LOG_Heiligabend                         1826      // 1 Bit, Bit 5
+#define LOG_Heiligabend                         2741      // 1 Bit, Bit 5
 #define     LOG_HeiligabendMask 0x20
 #define     LOG_HeiligabendShift 5
-#define LOG_Weihnachtstag1                      1826      // 1 Bit, Bit 4
+#define LOG_Weihnachtstag1                      2741      // 1 Bit, Bit 4
 #define     LOG_Weihnachtstag1Mask 0x10
 #define     LOG_Weihnachtstag1Shift 4
-#define LOG_Weihnachtstag2                      1826      // 1 Bit, Bit 3
+#define LOG_Weihnachtstag2                      2741      // 1 Bit, Bit 3
 #define     LOG_Weihnachtstag2Mask 0x08
 #define     LOG_Weihnachtstag2Shift 3
-#define LOG_Silvester                           1826      // 1 Bit, Bit 2
+#define LOG_Silvester                           2741      // 1 Bit, Bit 2
 #define     LOG_SilvesterMask 0x04
 #define     LOG_SilvesterShift 2
-#define LOG_Nationalfeiertag                    1826      // 1 Bit, Bit 1
+#define LOG_Nationalfeiertag                    2741      // 1 Bit, Bit 1
 #define     LOG_NationalfeiertagMask 0x02
 #define     LOG_NationalfeiertagShift 1
-#define LOG_MariaEmpfaengnis                    1826      // 1 Bit, Bit 0
+#define LOG_MariaEmpfaengnis                    2741      // 1 Bit, Bit 0
 #define     LOG_MariaEmpfaengnisMask 0x01
 #define     LOG_MariaEmpfaengnisShift 0
-#define LOG_NationalfeiertagSchweiz             1827      // 1 Bit, Bit 7
+#define LOG_NationalfeiertagSchweiz             2742      // 1 Bit, Bit 7
 #define     LOG_NationalfeiertagSchweizMask 0x80
 #define     LOG_NationalfeiertagSchweizShift 7
-#define LOG_Totensonntag                        1827      // 1 Bit, Bit 6
+#define LOG_Totensonntag                        2742      // 1 Bit, Bit 6
 #define     LOG_TotensonntagMask 0x40
 #define     LOG_TotensonntagShift 6
-#define LOG_Weltkindertag                       1827      // 1 Bit, Bit 5
+#define LOG_Weltkindertag                       2742      // 1 Bit, Bit 5
 #define     LOG_WeltkindertagMask 0x20
 #define     LOG_WeltkindertagShift 5
-#define LOG_UserFormula1                        1828      // char*, 99 Byte
+#define LOG_UserFormula1                        2743      // char*, 99 Byte
 #define     LOG_UserFormula1Length 99
-#define LOG_UserFormula1Active                  1927      // 1 Bit, Bit 7
+#define LOG_UserFormula1Active                  2842      // 1 Bit, Bit 7
 #define     LOG_UserFormula1ActiveMask 0x80
 #define     LOG_UserFormula1ActiveShift 7
-#define LOG_UserFormula2                        1928      // char*, 99 Byte
+#define LOG_UserFormula2                        2843      // char*, 99 Byte
 #define     LOG_UserFormula2Length 99
-#define LOG_UserFormula2Active                  2027      // 1 Bit, Bit 7
+#define LOG_UserFormula2Active                  2942      // 1 Bit, Bit 7
 #define     LOG_UserFormula2ActiveMask 0x80
 #define     LOG_UserFormula2ActiveShift 7
-#define LOG_UserFormula3                        2028      // char*, 99 Byte
+#define LOG_UserFormula3                        2943      // char*, 99 Byte
 #define     LOG_UserFormula3Length 99
-#define LOG_UserFormula3Active                  2127      // 1 Bit, Bit 7
+#define LOG_UserFormula3Active                  3042      // 1 Bit, Bit 7
 #define     LOG_UserFormula3ActiveMask 0x80
 #define     LOG_UserFormula3ActiveShift 7
-#define LOG_UserFormula4                        2128      // char*, 99 Byte
+#define LOG_UserFormula4                        3043      // char*, 99 Byte
 #define     LOG_UserFormula4Length 99
-#define LOG_UserFormula4Active                  2227      // 1 Bit, Bit 7
+#define LOG_UserFormula4Active                  3142      // 1 Bit, Bit 7
 #define     LOG_UserFormula4ActiveMask 0x80
 #define     LOG_UserFormula4ActiveShift 7
-#define LOG_UserFormula5                        2228      // char*, 99 Byte
+#define LOG_UserFormula5                        3143      // char*, 99 Byte
 #define     LOG_UserFormula5Length 99
-#define LOG_UserFormula5Active                  2327      // 1 Bit, Bit 7
+#define LOG_UserFormula5Active                  3242      // 1 Bit, Bit 7
 #define     LOG_UserFormula5ActiveMask 0x80
 #define     LOG_UserFormula5ActiveShift 7
-#define LOG_UserFormula6                        2328      // char*, 99 Byte
+#define LOG_UserFormula6                        3243      // char*, 99 Byte
 #define     LOG_UserFormula6Length 99
-#define LOG_UserFormula6Active                  2427      // 1 Bit, Bit 7
+#define LOG_UserFormula6Active                  3342      // 1 Bit, Bit 7
 #define     LOG_UserFormula6ActiveMask 0x80
 #define     LOG_UserFormula6ActiveShift 7
-#define LOG_UserFormula7                        2428      // char*, 99 Byte
+#define LOG_UserFormula7                        3343      // char*, 99 Byte
 #define     LOG_UserFormula7Length 99
-#define LOG_UserFormula7Active                  2527      // 1 Bit, Bit 7
+#define LOG_UserFormula7Active                  3442      // 1 Bit, Bit 7
 #define     LOG_UserFormula7ActiveMask 0x80
 #define     LOG_UserFormula7ActiveShift 7
-#define LOG_UserFormula8                        2528      // char*, 99 Byte
+#define LOG_UserFormula8                        3443      // char*, 99 Byte
 #define     LOG_UserFormula8Length 99
-#define LOG_UserFormula8Active                  2627      // 1 Bit, Bit 7
+#define LOG_UserFormula8Active                  3542      // 1 Bit, Bit 7
 #define     LOG_UserFormula8ActiveMask 0x80
 #define     LOG_UserFormula8ActiveShift 7
-#define LOG_UserFormula9                        2628      // char*, 99 Byte
+#define LOG_UserFormula9                        3543      // char*, 99 Byte
 #define     LOG_UserFormula9Length 99
-#define LOG_UserFormula9Active                  2727      // 1 Bit, Bit 7
+#define LOG_UserFormula9Active                  3642      // 1 Bit, Bit 7
 #define     LOG_UserFormula9ActiveMask 0x80
 #define     LOG_UserFormula9ActiveShift 7
-#define LOG_UserFormula10                       2728      // char*, 99 Byte
+#define LOG_UserFormula10                       3643      // char*, 99 Byte
 #define     LOG_UserFormula10Length 99
-#define LOG_UserFormula10Active                 2827      // 1 Bit, Bit 7
+#define LOG_UserFormula10Active                 3742      // 1 Bit, Bit 7
 #define     LOG_UserFormula10ActiveMask 0x80
 #define     LOG_UserFormula10ActiveShift 7
-#define LOG_UserFormula11                       2828      // char*, 99 Byte
+#define LOG_UserFormula11                       3743      // char*, 99 Byte
 #define     LOG_UserFormula11Length 99
-#define LOG_UserFormula11Active                 2927      // 1 Bit, Bit 7
+#define LOG_UserFormula11Active                 3842      // 1 Bit, Bit 7
 #define     LOG_UserFormula11ActiveMask 0x80
 #define     LOG_UserFormula11ActiveShift 7
-#define LOG_UserFormula12                       2928      // char*, 99 Byte
+#define LOG_UserFormula12                       3843      // char*, 99 Byte
 #define     LOG_UserFormula12Length 99
-#define LOG_UserFormula12Active                 3027      // 1 Bit, Bit 7
+#define LOG_UserFormula12Active                 3942      // 1 Bit, Bit 7
 #define     LOG_UserFormula12ActiveMask 0x80
 #define     LOG_UserFormula12ActiveShift 7
-#define LOG_UserFormula13                       3028      // char*, 99 Byte
+#define LOG_UserFormula13                       3943      // char*, 99 Byte
 #define     LOG_UserFormula13Length 99
-#define LOG_UserFormula13Active                 3127      // 1 Bit, Bit 7
+#define LOG_UserFormula13Active                 4042      // 1 Bit, Bit 7
 #define     LOG_UserFormula13ActiveMask 0x80
 #define     LOG_UserFormula13ActiveShift 7
-#define LOG_UserFormula14                       3128      // char*, 99 Byte
+#define LOG_UserFormula14                       4043      // char*, 99 Byte
 #define     LOG_UserFormula14Length 99
-#define LOG_UserFormula14Active                 3227      // 1 Bit, Bit 7
+#define LOG_UserFormula14Active                 4142      // 1 Bit, Bit 7
 #define     LOG_UserFormula14ActiveMask 0x80
 #define     LOG_UserFormula14ActiveShift 7
-#define LOG_UserFormula15                       3228      // char*, 99 Byte
+#define LOG_UserFormula15                       4143      // char*, 99 Byte
 #define     LOG_UserFormula15Length 99
-#define LOG_UserFormula15Active                 3327      // 1 Bit, Bit 7
+#define LOG_UserFormula15Active                 4242      // 1 Bit, Bit 7
 #define     LOG_UserFormula15ActiveMask 0x80
 #define     LOG_UserFormula15ActiveShift 7
-#define LOG_UserFormula16                       3328      // char*, 99 Byte
+#define LOG_UserFormula16                       4243      // char*, 99 Byte
 #define     LOG_UserFormula16Length 99
-#define LOG_UserFormula16Active                 3427      // 1 Bit, Bit 7
+#define LOG_UserFormula16Active                 4342      // 1 Bit, Bit 7
 #define     LOG_UserFormula16ActiveMask 0x80
 #define     LOG_UserFormula16ActiveShift 7
-#define LOG_UserFormula17                       3428      // char*, 99 Byte
+#define LOG_UserFormula17                       4343      // char*, 99 Byte
 #define     LOG_UserFormula17Length 99
-#define LOG_UserFormula17Active                 3527      // 1 Bit, Bit 7
+#define LOG_UserFormula17Active                 4442      // 1 Bit, Bit 7
 #define     LOG_UserFormula17ActiveMask 0x80
 #define     LOG_UserFormula17ActiveShift 7
-#define LOG_UserFormula18                       3528      // char*, 99 Byte
+#define LOG_UserFormula18                       4443      // char*, 99 Byte
 #define     LOG_UserFormula18Length 99
-#define LOG_UserFormula18Active                 3627      // 1 Bit, Bit 7
+#define LOG_UserFormula18Active                 4542      // 1 Bit, Bit 7
 #define     LOG_UserFormula18ActiveMask 0x80
 #define     LOG_UserFormula18ActiveShift 7
-#define LOG_UserFormula19                       3628      // char*, 99 Byte
+#define LOG_UserFormula19                       4543      // char*, 99 Byte
 #define     LOG_UserFormula19Length 99
-#define LOG_UserFormula19Active                 3727      // 1 Bit, Bit 7
+#define LOG_UserFormula19Active                 4642      // 1 Bit, Bit 7
 #define     LOG_UserFormula19ActiveMask 0x80
 #define     LOG_UserFormula19ActiveShift 7
-#define LOG_UserFormula20                       3728      // char*, 99 Byte
+#define LOG_UserFormula20                       4643      // char*, 99 Byte
 #define     LOG_UserFormula20Length 99
-#define LOG_UserFormula20Active                 3827      // 1 Bit, Bit 7
+#define LOG_UserFormula20Active                 4742      // 1 Bit, Bit 7
 #define     LOG_UserFormula20ActiveMask 0x80
 #define     LOG_UserFormula20ActiveShift 7
-#define LOG_UserFormula21                       3828      // char*, 99 Byte
+#define LOG_UserFormula21                       4743      // char*, 99 Byte
 #define     LOG_UserFormula21Length 99
-#define LOG_UserFormula21Active                 3927      // 1 Bit, Bit 7
+#define LOG_UserFormula21Active                 4842      // 1 Bit, Bit 7
 #define     LOG_UserFormula21ActiveMask 0x80
 #define     LOG_UserFormula21ActiveShift 7
-#define LOG_UserFormula22                       3928      // char*, 99 Byte
+#define LOG_UserFormula22                       4843      // char*, 99 Byte
 #define     LOG_UserFormula22Length 99
-#define LOG_UserFormula22Active                 4027      // 1 Bit, Bit 7
+#define LOG_UserFormula22Active                 4942      // 1 Bit, Bit 7
 #define     LOG_UserFormula22ActiveMask 0x80
 #define     LOG_UserFormula22ActiveShift 7
-#define LOG_UserFormula23                       4028      // char*, 99 Byte
+#define LOG_UserFormula23                       4943      // char*, 99 Byte
 #define     LOG_UserFormula23Length 99
-#define LOG_UserFormula23Active                 4127      // 1 Bit, Bit 7
+#define LOG_UserFormula23Active                 5042      // 1 Bit, Bit 7
 #define     LOG_UserFormula23ActiveMask 0x80
 #define     LOG_UserFormula23ActiveShift 7
-#define LOG_UserFormula24                       4128      // char*, 99 Byte
+#define LOG_UserFormula24                       5043      // char*, 99 Byte
 #define     LOG_UserFormula24Length 99
-#define LOG_UserFormula24Active                 4227      // 1 Bit, Bit 7
+#define LOG_UserFormula24Active                 5142      // 1 Bit, Bit 7
 #define     LOG_UserFormula24ActiveMask 0x80
 #define     LOG_UserFormula24ActiveShift 7
-#define LOG_UserFormula25                       4228      // char*, 99 Byte
+#define LOG_UserFormula25                       5143      // char*, 99 Byte
 #define     LOG_UserFormula25Length 99
-#define LOG_UserFormula25Active                 4327      // 1 Bit, Bit 7
+#define LOG_UserFormula25Active                 5242      // 1 Bit, Bit 7
 #define     LOG_UserFormula25ActiveMask 0x80
 #define     LOG_UserFormula25ActiveShift 7
-#define LOG_UserFormula26                       4328      // char*, 99 Byte
+#define LOG_UserFormula26                       5243      // char*, 99 Byte
 #define     LOG_UserFormula26Length 99
-#define LOG_UserFormula26Active                 4427      // 1 Bit, Bit 7
+#define LOG_UserFormula26Active                 5342      // 1 Bit, Bit 7
 #define     LOG_UserFormula26ActiveMask 0x80
 #define     LOG_UserFormula26ActiveShift 7
-#define LOG_UserFormula27                       4428      // char*, 99 Byte
+#define LOG_UserFormula27                       5343      // char*, 99 Byte
 #define     LOG_UserFormula27Length 99
-#define LOG_UserFormula27Active                 4527      // 1 Bit, Bit 7
+#define LOG_UserFormula27Active                 5442      // 1 Bit, Bit 7
 #define     LOG_UserFormula27ActiveMask 0x80
 #define     LOG_UserFormula27ActiveShift 7
-#define LOG_UserFormula28                       4528      // char*, 99 Byte
+#define LOG_UserFormula28                       5443      // char*, 99 Byte
 #define     LOG_UserFormula28Length 99
-#define LOG_UserFormula28Active                 4627      // 1 Bit, Bit 7
+#define LOG_UserFormula28Active                 5542      // 1 Bit, Bit 7
 #define     LOG_UserFormula28ActiveMask 0x80
 #define     LOG_UserFormula28ActiveShift 7
-#define LOG_UserFormula29                       4628      // char*, 99 Byte
+#define LOG_UserFormula29                       5543      // char*, 99 Byte
 #define     LOG_UserFormula29Length 99
-#define LOG_UserFormula29Active                 4727      // 1 Bit, Bit 7
+#define LOG_UserFormula29Active                 5642      // 1 Bit, Bit 7
 #define     LOG_UserFormula29ActiveMask 0x80
 #define     LOG_UserFormula29ActiveShift 7
-#define LOG_UserFormula30                       4728      // char*, 99 Byte
+#define LOG_UserFormula30                       5643      // char*, 99 Byte
 #define     LOG_UserFormula30Length 99
-#define LOG_UserFormula30Active                 4827      // 1 Bit, Bit 7
+#define LOG_UserFormula30Active                 5742      // 1 Bit, Bit 7
 #define     LOG_UserFormula30ActiveMask 0x80
 #define     LOG_UserFormula30ActiveShift 7
 
@@ -2063,7 +2698,7 @@
 #define LOG_ChannelCount 3
 
 // Parameter per channel
-#define LOG_ParamBlockOffset 4828
+#define LOG_ParamBlockOffset 5743
 #define LOG_ParamBlockSize 89
 #define LOG_ParamCalcIndex(index) (index + LOG_ParamBlockOffset + _channelIndex * LOG_ParamBlockSize)
 
@@ -3976,13 +4611,174 @@
 #define BASE_KommentarModuleModuleParamSize 0
 #define BASE_KommentarModuleSubmodulesParamSize 0
 #define BASE_KommentarModuleParamSize 0
-#define BASE_KommentarModuleParamOffset 5095
+#define BASE_KommentarModuleParamOffset 6010
 #define BASE_KommentarModuleCalcIndex(index, m1) (index + BASE_KommentarModuleParamOffset + _channelIndex * BASE_KommentarModuleCount * BASE_KommentarModuleParamSize + m1 * BASE_KommentarModuleParamSize)
 
 
 
 
 // enumeration types
+enum class PT_CLIInit
+{
+    Saved = 0,
+    ReadFromBus = 1,
+    ReadFromBusOrSaved = 2
+};
+
+enum class PT_CLIHVAC
+{
+    Off = 6,
+    Auto = 0,
+    Heating = 1,
+    Cooling = 3,
+    Fan = 9,
+    Dehumification = 14
+};
+
+enum class PT_CLIDefaultHVAC
+{
+    DependentOnSeason = 254,
+    Off = 6,
+    Auto = 0,
+    Heating = 1,
+    Cooling = 3,
+    Fan = 9,
+    Dehumification = 14
+};
+
+enum class PT_CLIModeChange
+{
+    Deactivated = 255,
+    Off = 6,
+    Auto = 0,
+    Heating = 1,
+    Cooling = 3,
+    Fan = 9,
+    Dehumification = 14
+};
+
+enum class PT_CLIHysteresis
+{
+    Hysteresis0_5 = 0,
+    Hysteresis1_0 = 1,
+    Hysteresis2_0 = 2
+};
+
+enum class PT_CLIControlMode
+{
+    HVAC = 0,
+    HVAC_AND_POWER = 1,
+    ONE_OBJECT_PER_MODE = 2
+};
+
+enum class PT_CLIControlTemperature
+{
+    TargetTemperature = 0,
+    Setpoint = 1,
+    PulseWidthModulation = 2,
+    FakeSetTemperature = 3
+};
+
+enum class PT_CLIWaitTimeAfterPowerUp
+{
+    WaitTime1s = 0,
+    WaitTime5s = 1,
+    WaitTime10s = 2,
+    WaitTime20s = 3,
+    WaitTime30s = 4
+};
+
+enum class PT_CLIAverageTemperatureCalculation
+{
+    EveryHour = 0,
+    MannheimHours = 1,
+    MinMaxAverage = 2,
+    GroupObjectDailyAverage = 3
+};
+
+enum class PT_CLIDeviceSelection
+{
+    Disabled = 0,
+    CoolingHeatingSystem1 = 1,
+    CoolingHeatingSystem2 = 2,
+    CoolingHeatingSystem1And2 = 3
+};
+
+enum class PT_CLIDeviceSelectionFix
+{
+    CLI_DeviceName = 0,
+    ExternalCoolingHeatingSystem = 1
+};
+
+enum class PT_CLIWindowOpenCondition
+{
+    Disabled = 0,
+    IfHeating = 1,
+    IfCooling = 2,
+    IfHeatingOrCooling = 3,
+    Always = 4
+};
+
+enum class PT_CLIWindowOpenAction
+{
+    SetpointAdjustment = 0,
+    RevertSetpointAdjustment = 1,
+    DisableHeatingCooling = 2,
+    DisableHeatingCoolingOnlyInAuto = 3,
+    EnableHeatingCooling = 4,
+    DoNotForwardRoomTemperatureChange = 5,
+    ForwardRoomTemperatureChange = 6,
+    WindowOpenAlarm = 7,
+    WindowOpenAlarmActiveHeatingCooling = 8
+};
+
+enum class PT_CLIWindowClose
+{
+    RoomTempStable = 0,
+    WaitTime = 1
+};
+
+enum class PT_CLIPIPreset
+{
+    FloorHeating = 0,
+    Radiator = 1,
+    AirHeating = 2,
+    Custom = 15
+};
+
+enum class PT_CLITargetLimitHandling
+{
+    MinMax = 0,
+    Ignore = 1
+};
+
+enum class PT_CLIAutomaticDevice
+{
+    Disabled = 0,
+    OpenKNXAutomatic = 1,
+    RequestByGroupObject = 2
+};
+
+enum class PT_CLIIsActive
+{
+    Calculated = 0,
+    FeedbackOnOff = 1,
+    FeedbackPercent = 2
+};
+
+enum class PT_CLIBehaviorDeviceChange
+{
+    LeavesAutomaticModeTemp = 0,
+    LeavesAutomaticMode = 1,
+    OpenKNXOverridesSelection = 2
+};
+
+enum class PT_CLIModeFeedback
+{
+    ReturnLastActiveMode = 0,
+    ReturnOff = 1
+};
+
 enum class PT_Logic
 {
     AUS = 0,

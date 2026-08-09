@@ -5,7 +5,19 @@
   <op:config name="%LOG_NumChannelsDefault%" value="3" />
   <op:config name="%WIRE_NumChannelsDefault%" value="3" />
 
+  <op:config name="%CLI_ChannelName%" value="Kanal %Z%: {{0: ...}}" />
+  <op:config name="%CLI_ControlTemperatureDefault%" value="1" />
+  <op:config name="%CLI_ControlTemperatureAccess%" value="Read" />
+  <op:config name="%CLI_ControlDeviceSelectionType%" value="%AID%_PT-HTADeviceSelection" />
+  <op:config name="%CLI_ShowModeSelection%" value="0" />
+  <op:config name="%CLI_ClimateDevice1Name%" value="Heizungsaktorkanal" />
+  <op:config name="%CLI_ClimateDevice2Name%" value="Ext. Kühl-/Heizsystem" />
+  <op:config name="%CLI_ModeCoolingDefault%" value="1" />
+  <op:config name="%CLI_ModeAutomaticDefault%" value="3" />
+  <op:config name="%CLI_ModeAutomaticHeatingCoolingDefault%" value="1" />
+
   <op:config name="%UCT_VerifyVersion%" value="0.5" />
+  <op:config name="%CLI_VerifyVersion%" value="0.1" />
   <op:config name="%HTA_VerifyVersion%" value="0.1" />
   <op:config name="%LOG_VerifyVersion%" value="4.3" />
   <op:config name="%WIRE_VerifyVersion%" value="2.2" />

@@ -1,6 +1,7 @@
 #include "Logic.h"
 #include "HeatingActuatorModule.h"
 #include "FileTransferModule.h"
+#include "ClimateControlModule.h"
 #include "WireGateway.h"
 
 #include "OpenKNX.h"
@@ -14,6 +15,7 @@ void setup()
     openknx.addModule(1, openknxLogic);
     openknx.addModule(2, openknxHeatingActuatorModule);
     openknx.addModule(3, openknxFileTransferModule);
+    openknx.addModule(4, openknxClimateControlModule);
     openknx.addModule(5, openknxWireGateway);
     
     openknx.setup();
