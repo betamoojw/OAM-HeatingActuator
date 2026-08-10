@@ -21,6 +21,7 @@
   <op:config name="%HTA_VerifyVersion%" value="0.1" />
   <op:config name="%LOG_VerifyVersion%" value="4.3" />
   <op:config name="%WIRE_VerifyVersion%" value="2.2" />
+  <op:config name="%FCB_VerifyVersion%" value="0.10" />
   <op:config name="%BASE_VerifyVersion%" value="1.8" />
 
   <op:config name="%HTA_ApplicationVersion%" value="0.1" />

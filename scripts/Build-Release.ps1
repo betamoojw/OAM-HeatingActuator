@@ -29,7 +29,11 @@
 if (!$?) { exit 1 }
 
 # build firmware
-lib/OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_AB_SMARTHOUSE_SA_REG6_8CH firmware-AB-SmartHouse-SwitchActuator-REG6-8CH uf2
+lib/OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_AB_SMARTHOUSE_HTA_REG6_12CH firmware-AB-SmartHouse-HeatingActuator-REG6-12CH uf2
+if (!$?) { exit 1 }
+
+# build firmware
+lib/OGM-Common/scripts/setup/reusable/Build-Step.ps1 release_AB_SMARTHOUSE_HTA_UP_1CH firmware-AB-SmartHouse-HeatingActuator-UP_1CH uf2
 if (!$?) { exit 1 }
 
 # execute generic post-build steps

@@ -14,7 +14,7 @@
     OrderNumber="OpenKnxHeatingActuator"
   />
   <op:define prefix="BASE" ModuleType="10"
-    share="../lib/OGM-Common/src/Common.share.xml">
+             share="../lib/OGM-Common/src/Common.share.xml">
     <op:verify File="../lib/OGM-Common/library.json" ModuleVersion="%BASE_VerifyVersion%" />
   </op:define>
 
@@ -25,15 +25,36 @@
     <op:verify File="../../OFM-ConfigTransfer/library.json" ModuleVersion="%UCT_VerifyVersion%" />
   </op:define>
 
+  <op:define prefix="CLI"
+    share="../lib/OFM-ClimateControl/src/ClimateControl.share.xml"
+    template="../lib/OFM-ClimateControl/src/ClimateControl.templ.xml"
+    NumChannels="%HTA_NumChannelsDefault%"
+    KoSingleOffset="590"
+    KoOffset="600"
+    ModuleType="30">
+    <op:verify File="../lib/OFM-ClimateControl/library.json" ModuleVersion="%CLI_VerifyVersion%" />
+  </op:define> <!-- 42 KOs/Ch = 504 + 4 single --> 
+
   <op:define prefix="HTA"
     share="../lib/OFM-HeatingActuator/src/HeatingActuatorModule.share.xml"
     template="../lib/OFM-HeatingActuator/src/HeatingActuatorModule.templ.xml"
-    NumChannels="12"
-    KoSingleOffset="20"
-    KoOffset="350"
+    NumChannels="%HTA_NumChannelsDefault%"
+    KoOffset="500"
     ModuleType="20">
     <op:verify File="../lib/OFM-HeatingActuator/library.json" ModuleVersion="%HTA_VerifyVersion%" />
-  </op:define>
+  </op:define> <!-- 4 KOs/Ch = 48 --> 
+  <!-- KoSingleOffset="20" - no KOs in share right now -->
+
+  <op:define prefix="WIRE" 
+             share="../lib/OFM-OneWireModule/src/WireGateway.share.xml"
+             template="../lib/OFM-OneWireModule/src/WireGateway.templ.xml"
+             NumChannels="24" 
+             KoOffset="465"  
+             ModuleType="40" 
+             KoSingleOffset="450" >
+    <op:verify File="../lib/OFM-OneWireModule/library.json" ModuleVersion="%WIRE_VerifyVersion%" />
+  </op:define> <!-- 1 KOs/Ch = 24 + 11 single --> 
+
 
   <op:define prefix="LOG"
     share="../lib/OFM-LogicModule/src/Logikmodul.share.xml"
@@ -42,7 +63,16 @@
     KoOffset="50"
     ModuleType="10">
     <op:verify File="../lib/OFM-LogicModule/library.json" ModuleVersion="%LOG_VerifyVersion%" />
-  </op:define>
+  </op:define> <!-- 3 KOs/Ch = 297 -->
+
+  <op:define prefix="FCB"
+    share="../lib/OFM-FunctionBlocks/src/FunctionBlocks.share.xml"
+    template="../lib/OFM-FunctionBlocks/src/FunctionBlocks.templ.xml"
+    NumChannels="10"
+    KoOffset="350"
+    ModuleType="50">
+    <op:verify File="../lib/OFM-FunctionBlocks/library.json" ModuleVersion="%FCB_VerifyVersion%" /> 
+  </op:define> <!-- 10 KOs/Ch = 100 -->
 
   <generate />
 </KNX>
