@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAIN_Version "4a3e906"
+#define MAIN_Version "d8ffa49"
 #define KNX_Version "2.3.1+7124a64"
 #define MODULE_ClimateControl_Version "0.1.0+41e466c"
 #define MODULE_ClimateControl_Version_Major 0
